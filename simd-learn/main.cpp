@@ -1,6 +1,7 @@
 #include <inttypes.h>
 #include <iostream>
 #include <chrono>
+#include <format>
 #include <string.h>
 
 #include <immintrin.h>
@@ -24,19 +25,20 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
    }
 
    int32_t rounds = 0;
-   while( a_sz > 0 )
-   {
-      std::cout << "round:" << ++rounds << std::endl;
-      __m256i vstr = _mm256_set1_epi8( a_ch );
-     // _mm256_storeu_si256( (__m256i*)a_pData, vstr );
-     a_pData->ch[0]      = (int32_t)vstr[0];
-     a_pData->ch[1]      = (char)vstr[1];
-     a_pData->ch[2]      = (char)vstr[2];
-     a_pData->ch[3]      = (char)vstr[3];
+   char   *pdata = (char*)a_pData;
+   size_t  sz = a_sz;
 
-      //a_pData += sizeof( __m256i );
-      a_pData += sizeof( __m256i );
-      a_sz -= sizeof( __m256i );
+   while( sz > 0 )
+   {
+     __m256i vstr = _mm256_set1_epi8( a_ch );
+     _mm256_storeu_si256( (__m256i*)pdata, vstr );
+     // *(int64_t*)(pdata+0)  = vstr[0];
+     // *(int64_t*)(pdata+8)  = vstr[1];
+     // *(int64_t*)(pdata+16) = vstr[2];
+     // *(int64_t*)(pdata+24) = vstr[3];
+
+      pdata += sizeof( __m256i );
+      sz -= sizeof( __m256i );
    }
    return true;
 }
@@ -62,25 +64,29 @@ void run_std( char* a_pdata, size_t a_szBuf, const int32_t a_count )
    } 
    auto stop_reg = std::chrono::high_resolution_clock::now();
    auto duration_reg = std::chrono::duration_cast<std::chrono::microseconds>( stop_reg - start_reg );
-   std::cout << "Memset std  took " << duration_reg<< " usec" << std::endl;
+   auto str = std::format( "{:L}", duration_reg );
+   std::cout << "Memset std  took " << str << std::endl;
 }
 
 void run_simd( char* a_pdata, size_t a_szBuf, int32_t a_count )
 {
-   char ch = 0;
+   char ch = 0xFF;
    auto start_simd = std::chrono::high_resolution_clock::now();
    for( int i=0; i<a_count; ++i )
    {
       memset_simd( (int8*)a_pdata, ch, a_szBuf*sizeof(char) );
-      ++ch;  // let it rollover
+      ++ch;  // let it rollover, keep changing so that we get cache miss
    } 
    auto stop_simd = std::chrono::high_resolution_clock::now();
    auto duration_simd = std::chrono::duration_cast<std::chrono::microseconds>( stop_simd - start_simd );
-   std::cout << "Memset simd took " << duration_simd << " usec" << std::endl;
+   auto str = std::format( "{:L}", duration_simd );
+   std::cout << "Memset simd took " << str << std::endl;
 }
 
 int main( int, char*[] )
 {
+
+   std::locale::global(std::locale("en_US.UTF-8"));
    char* pdata32 =  new char[32];
    char* pdata64 =  new char[64];
    char* pdata60 =  new char[60];
