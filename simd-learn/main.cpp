@@ -2,6 +2,7 @@
 #include <iostream>
 #include <chrono>
 #include <format>
+#include <memory>
 #include <string.h>
 
 #include <immintrin.h>
@@ -24,14 +25,15 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
       return false;
    }
 
-   int32_t rounds = 0;
    char   *pdata = (char*)a_pData;
    size_t  sz = a_sz;
 
    while( sz > 0 )
    {
      __m256i vstr = _mm256_set1_epi8( a_ch );
-     _mm256_storeu_si256( (__m256i*)pdata, vstr );
+     //_mm256_storeu_si256( (__m256i*)pdata, vstr );
+     _mm256_stream_si256( (__m256i*)pdata, vstr );
+
      // *(int64_t*)(pdata+0)  = vstr[0];
      // *(int64_t*)(pdata+8)  = vstr[1];
      // *(int64_t*)(pdata+16) = vstr[2];
@@ -105,9 +107,12 @@ int main( int, char*[] )
    //size_t szBuf =  64;
    char *pdata_simd = new char[szBuf];
    char *pdata_std  = new char[szBuf];
+   char *pdata_align = nullptr;
+   posix_memalign( (void**)&pdata_align, 32, szBuf*sizeof(char) );
 
    int32_t nRuns = 10000;
-   run_simd( pdata_simd,szBuf, nRuns );
+   //run_simd( pdata_simd,szBuf, nRuns );
+   run_simd( pdata_align,szBuf, nRuns );
    run_std ( pdata_std, szBuf, nRuns );
 
 

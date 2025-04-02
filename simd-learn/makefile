@@ -1,13 +1,25 @@
 CXX=g++
-CXXFLAGS=-mavx2 -masm=att -std=c++20 -g																																																																																																																																																																																																																																			
+
 TARGET=simd
 ASMFILE=main.s
 SRCFILE=main.cpp
 
+CXXFLAGSALL     = -mavx2 -masm=att -Wall -Wextra -Wshadow -std=c++20 
+CXXFLAGSRELEASE = $(CXXFLAGSALL) -O2 -DNDEBUG 
+CXXFLAGSDEBUG   = $(CXXFLAGSALL) -g -O0 -DDEBUG
+
+.PHONY: release
+release: CFLAGS = $(CXXFLAGSRELEASE)
+release: all
+
+.PHONY: debug
+debug: CFLAGS = $(CXXFLAGSDEBUG)
+debug: all
+
 all: $(TARGET)
 
 $(TARGET): $(SRCFILE)
-	$(CXX) $(CXXFLAGS) $(SRCFILE) -o $(TARGET)
+	$(CXX) $(CFLAGS) $(SRCFILE) -o $(TARGET)
 
 asm: $(SRCFILE)
 	$(CXX) $(CXXFLAGS) -S $(SRCFILE) -o $(ASMFILE)	
