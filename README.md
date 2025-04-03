@@ -12,6 +12,7 @@ memset uses larger types, such as int64_t to write
 Notice that buidling with optimization disabled affects the simd runtime way more than memset  
 
 I will need to profile the code and look for cache hits vs misses. Expecting cache misses as I am invalidating the cache by writing a diff value for each iteration writing to memory.  
+Interesting: running with one iteration, the simd call always  does better.  Is it the cache??  
 
 ![alt text]( simd-learn/info/benchmark-2-release.png )  
 Looking at the asm generated,  I saw something that should have been obvious. _mm256_set1_epi8 does not need to be in the loop and that it generates a lot of instructions  

@@ -1,4 +1,5 @@
 #include <inttypes.h>
+#include <stdlib.h>
 #include <iostream>
 #include <chrono>
 #include <format>
@@ -85,8 +86,13 @@ void run_simd( char* a_pdata, size_t a_szBuf, int32_t a_count )
    std::cout << "Memset simd took " << str << std::endl;
 }
 
-int main( int, char*[] )
+int main( int argc, char* argv[] )
 {
+   int32_t nRuns = 10000;
+   if( argc > 1 )
+   {
+      nRuns = atoi( argv[1] );
+   }
 
    std::locale::global(std::locale("en_US.UTF-8"));
    char* pdata32 =  new char[32];
@@ -100,8 +106,8 @@ int main( int, char*[] )
    memset_simd( &i8, 1, sizeof(int8) );
    memset_simd( &i8, 0, sizeof(int8) );
 
-
-   std::cout << "benchmark" << std::endl;
+   
+   std::cout << "benchmark " << nRuns << " iterations" << std::endl;
 
    size_t szBuf = 512*1024;
    //size_t szBuf =  64;
@@ -110,7 +116,6 @@ int main( int, char*[] )
    char *pdata_align = nullptr;
    posix_memalign( (void**)&pdata_align, sizeof( __m256i ), szBuf*sizeof(char) );
 
-   int32_t nRuns = 10000;
    //run_simd( pdata_simd,szBuf, nRuns );
    run_simd( pdata_align,szBuf, nRuns );
    run_std ( pdata_std, szBuf, nRuns );
