@@ -10,6 +10,5 @@ memset uses larger types, such as int64_t to write
 ![alt text]( simd-learn/info/benchmark-1-debug.png )  
 Notice that buidling with optimization disabled affects the simd runtime way more than memset  
 
-
-
+I will need to profile the code and look for cache hits vs misses. Expecting cache misses as I am invalidating the cache by writing a diff value for each iteration writing to memory.  
 
