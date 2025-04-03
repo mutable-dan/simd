@@ -12,3 +12,6 @@ Notice that buidling with optimization disabled affects the simd runtime way mor
 
 I will need to profile the code and look for cache hits vs misses. Expecting cache misses as I am invalidating the cache by writing a diff value for each iteration writing to memory.  
 
+![alt text]( simd-learn/info/benchmark-2-release.png )  
+Looking at the asm generated,  I saw something that should have been obvious. _mm256_set1_epi8 does not need to be in the loop and that it generates a lot of instructions  
+Being out of the loop, optimizing the size of the type until the runtimes are significanty better.  
