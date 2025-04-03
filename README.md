@@ -1,5 +1,6 @@
 # simd
 ## <ins>learn to prog using gcc simd compiler intrinsics<ins>  
+CPU: Core i7-6 model 94 supporting AVX2 and sse4.2
 
 First round of test are not as expected. Aligned alloc showed no difference (though it is possible that the alloc that was not specifically aligned was in fact aligned)  
 This test was with the _mm256_storeu_si256 intrinsic  
