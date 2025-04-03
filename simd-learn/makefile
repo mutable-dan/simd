@@ -22,7 +22,8 @@ $(TARGET): $(SRCFILE)
 	$(CXX) $(CFLAGS) $(SRCFILE) -o $(TARGET)
 
 asm: $(SRCFILE)
-	$(CXX) $(CXXFLAGSALL) -O0 -S $(SRCFILE) -o $(ASMFILE)	
+	$(CXX) $(CXXFLAGSALL) -O0 -S -fverbose-asm $(SRCFILE) -o $(ASMFILE)	
+	#$(CXX) $(CXXFLAGSALL) -O0 -S -Wa,-aslh  $(SRCFILE) -o $(ASMFILE)	
 
 clean:
 	rm -f $(TARGET) $(ASMFILE)

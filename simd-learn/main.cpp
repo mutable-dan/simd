@@ -28,9 +28,9 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
    char   *pdata = (char*)a_pData;
    size_t  sz = a_sz;
 
+   __m256i vstr = _mm256_set1_epi8( a_ch );
    while( sz > 0 )
    {
-     __m256i vstr = _mm256_set1_epi8( a_ch );
      _mm256_storeu_si256( (__m256i*)pdata, vstr );
      //_mm256_stream_si256( (__m256i*)pdata, vstr );
 
