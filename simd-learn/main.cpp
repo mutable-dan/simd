@@ -31,8 +31,8 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
    while( sz > 0 )
    {
      __m256i vstr = _mm256_set1_epi8( a_ch );
-     //_mm256_storeu_si256( (__m256i*)pdata, vstr );
-     _mm256_stream_si256( (__m256i*)pdata, vstr );
+     _mm256_storeu_si256( (__m256i*)pdata, vstr );
+     //_mm256_stream_si256( (__m256i*)pdata, vstr );
 
      // *(int64_t*)(pdata+0)  = vstr[0];
      // *(int64_t*)(pdata+8)  = vstr[1];
@@ -108,7 +108,7 @@ int main( int, char*[] )
    char *pdata_simd = new char[szBuf];
    char *pdata_std  = new char[szBuf];
    char *pdata_align = nullptr;
-   posix_memalign( (void**)&pdata_align, 32, szBuf*sizeof(char) );
+   posix_memalign( (void**)&pdata_align, sizeof( __m256i ), szBuf*sizeof(char) );
 
    int32_t nRuns = 10000;
    //run_simd( pdata_simd,szBuf, nRuns );
