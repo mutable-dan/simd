@@ -8,6 +8,8 @@
 
 #include <immintrin.h>
 
+using namespace std;
+
 union int8
 {
    // m256 is 32bytes or 256bits
@@ -22,7 +24,7 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
 {
    if( (a_sz % sizeof( __m256i ) ) != 0 )
    {
-      std::cerr << "size must be a multiple of 32" << std::endl;
+      cerr << "size must be a multiple of 32" << endl;
       return false;
    }
 
@@ -41,8 +43,6 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
      // *(int64_t*)(pdata+16) = vstr[2];
      // *(int64_t*)(pdata+24) = vstr[3];
 
-      //pdata += sizeof( __m256i );
-      //p256 += sizeof( __m256i );
       ++p256;
       sz -= sizeof( __m256i );
    }
@@ -51,31 +51,31 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
 
 void run_std( char* a_pdata, size_t a_szBuf, const int32_t a_count )
 {
-   char ch = 0;  // let it rollover
+   char ch = 0xFD;  // let it rollover
 
-   auto start_reg = std::chrono::high_resolution_clock::now();
+   auto start_reg = chrono::high_resolution_clock::now();
    for( int i=0; i<a_count; ++i )
    {
       memset( (void*)a_pdata, ++ch, a_szBuf*sizeof(char) );
    } 
-   auto stop_reg = std::chrono::high_resolution_clock::now();
-   auto duration_reg = std::chrono::duration_cast<std::chrono::microseconds>( stop_reg - start_reg );
-   auto str = std::format( "{:L}", duration_reg );
-   std::cout << "Memset std  took " << str << std::endl;
+   auto stop_reg = chrono::high_resolution_clock::now();
+   auto duration_reg = chrono::duration_cast<chrono::microseconds>( stop_reg - start_reg );
+   auto str = format( "{:L}", duration_reg );
+   cout << "Memset std  took " << str << endl;
 }
 
 void run_simd( char* a_pdata, size_t a_szBuf, int32_t a_count )
 {
    char ch = 0xFE;  // let it rollover, keep changing so that we get cache miss
-   auto start_simd = std::chrono::high_resolution_clock::now();
+   auto start_simd = chrono::high_resolution_clock::now();
    for( int i=0; i<a_count; ++i )
    {
       memset_simd( (int8*)a_pdata, ++ch, a_szBuf*sizeof(char) );
    } 
-   auto stop_simd = std::chrono::high_resolution_clock::now();
-   auto duration_simd = std::chrono::duration_cast<std::chrono::microseconds>( stop_simd - start_simd );
-   auto str = std::format( "{:L}", duration_simd );
-   std::cout << "Memset simd took " << str << std::endl;
+   auto stop_simd = chrono::high_resolution_clock::now();
+   auto duration_simd = chrono::duration_cast<chrono::microseconds>( stop_simd - start_simd );
+   auto str = format( "{:L}", duration_simd );
+   cout << "Memset simd took " << str << endl;
 }
 
 void mem_unk()
@@ -95,45 +95,95 @@ int main( int argc, char* argv[] )
    {
       if( (a_nSz % 32) != 0 )
       {
-         std::cerr << "bad alloc" << std::endl;
          return nullptr;
       }
       return new char[a_nSz];
    };
+   auto ptr_align = []( uint32_t a_sz ) -> char*
+   {
+      if( (a_sz % 32) != 0 )
+      {
+         return nullptr;
+      }
+      char *pdata_align = nullptr;
+      // align on 32 byte
+      if( 0 != posix_memalign( (void**)&pdata_align, sizeof( __m256i ), a_sz*sizeof(char) ) )
+      {
+         cerr << "posix memalign error" << endl;
+         return nullptr;
+      }
+      return pdata_align;
+   };
 
-   int32_t nRuns = 10000;
-   if( argc > 1 )
+   int32_t nRuns    = 10000;
+   size_t  szBuf    = 512*1024*32;
+   bool    bReverse = false;
+
+   cout << "usage: " << argv[0] << " <iterations> <bytes to alloc> <r for reverse>\n" << endl;
+
+   if( argc >= 2 )
    {
       nRuns = atoi( argv[1] );
    }
-
-   std::locale::global(std::locale("en_US.UTF-8"));
-   char* pdata32 =  new char[32];
-   int8 i8;
-
-   memset_simd( (int8*)pdata32, 1, 32 );
-   memset_simd( (int8*)pdata32, 1, 30 );
-   memset_simd( &i8, 1, sizeof(int8) );
-   memset_simd( &i8, 0, sizeof(int8) );
-
-   
-   std::cout << "benchmark " << nRuns << " iterations" << std::endl;
-
-   size_t szBuf = 512*1024*32;
-   //size_t szBuf = 100*32;
-   char *pdata_simd = ptr( szBuf );
-   char *pdata_std  = ptr( szBuf );
-   //char *pdata_align = nullptr;
-   //if( 0 != posix_memalign( (void**)&pdata_align, sizeof( __m256i ), szBuf*sizeof(char) ) )
-   //{
-   //   std::cerr << "posix memalign error" << std::endl;
-   //}
-
-   run_simd( pdata_simd,szBuf, nRuns );
-   run_std ( pdata_std, szBuf, nRuns );
+   if( argc >= 3 )
+   {
+      szBuf = atoi( argv[2] );
+   }
+   if( argc == 4 )
+   {
+      if( *argv[3] == 'r' )
+      {
+         // reverse order call memset and simd memset
+         bReverse = true;
+      }
+   }
 
 
+   locale::global(locale("en_US.UTF-8"));
+   cout << "benchmark: byes alloc:" << szBuf << ", iterations:" << nRuns << endl;
+   if( true == bReverse )
+   {
+      cout << "  call mem ops in reverse order" << endl;
+   }
+   cout << endl;
 
+   char *pdata = ptr( szBuf );
+   if( nullptr != pdata )
+   {
+      if( false == bReverse )
+      {
+         run_std ( pdata, szBuf, nRuns );
+         run_simd( pdata, szBuf, nRuns );
+      } else
+      {
+         run_simd( pdata, szBuf, nRuns );
+         run_std ( pdata, szBuf, nRuns );
+      }
+      delete[] pdata;
+   } else
+   {
+      cerr << "size must be a multiple of " << sizeof( __m256i ) << endl;
+   }
+
+   cout << "\nrun aligned" << endl;
+   pdata = ptr_align( szBuf );
+   if( nullptr != pdata )
+   {
+      if( false == bReverse )
+      {
+         run_std ( pdata, szBuf, nRuns );
+         run_simd( pdata, szBuf, nRuns );
+      } else
+      {
+         run_simd( pdata, szBuf, nRuns );
+         run_std ( pdata, szBuf, nRuns );
+      }
+      free( pdata );
+   } else
+   {
+      cerr << "size must be a multiple of " << sizeof( __m256i ) << endl;
+   }
+   cout << endl;
 
    return 0;
 }
