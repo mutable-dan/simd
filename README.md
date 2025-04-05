@@ -1,4 +1,11 @@
 # simd
+  
+## Added a command line optios header only library  
+I did not want to install so I made a sym link to the library as  
+ln -s <path>/cxxopts/include include  
+just point your make file INCLUDEDIR to the symlink to path aboove  
+  
+  
 ## <ins>learn to prog using gcc simd compiler intrinsics<ins>  
 CPU: Core i7-6 model 94 supporting AVX2 and sse4.2
 

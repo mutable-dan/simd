@@ -3,17 +3,18 @@ CXX=g++
 TARGET=simd
 ASMFILE=main.s
 SRCFILE=main.cpp
+INCLUDEDIR=-I../../include 
 
 CXXFLAGSALL     = -mavx2 -masm=att -Wall -Wextra -Wshadow -std=c++20 
 CXXFLAGSRELEASE = $(CXXFLAGSALL) -O2 -DNDEBUG 
 CXXFLAGSDEBUG   = $(CXXFLAGSALL) -g -O0 -DDEBUG
 
 .PHONY: release
-release: CFLAGS = $(CXXFLAGSRELEASE)
+release: CFLAGS = $(CXXFLAGSRELEASE) $(INCLUDEDIR)
 release: all
 
 .PHONY: debug
-debug: CFLAGS = $(CXXFLAGSDEBUG)
+debug: CFLAGS = $(CXXFLAGSDEBUG) $(INCLUDEDIR)
 debug: all
 
 all: $(TARGET)

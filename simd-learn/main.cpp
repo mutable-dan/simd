@@ -4,9 +4,11 @@
 #include <chrono>
 #include <format>
 #include <memory>
+#include <exception>
 #include <string.h>
-
 #include <immintrin.h>
+
+#include <cxxopts.hpp>  // https://github.com/jarro2783/cxxopts.git
 
 using namespace std;
 
@@ -115,49 +117,78 @@ int main( int argc, char* argv[] )
       return pdata_align;
    };
 
-   int32_t nRuns    = 10000;
-   size_t  szBuf    = 512*1024*32;
-   bool    bReverse = false;
+   cxxopts::Options options( "simd", "perf test of memset using simd instructions  vs glibc memset" );
+   options.add_options()
+      ( "i,iterations", "Number of iterations to run",       cxxopts::value<uint32_t>()->default_value( "1000"  ) )
+      ( "m,mem", "Memory to allocate for test" ,             cxxopts::value<uint32_t>()->default_value( "512"   ) )
+      ( "r,reverse", "Reverse call order to memset an simd", cxxopts::value<bool>()->    default_value( "false" ) )
+      ( "g,memset-only", "Run memeset only" )
+      ( "s,simd-only", "Run simd only"      )
+      ( "h,help", "Usage" );
 
-   cout << "usage: " << argv[0] << " <iterations> <bytes to alloc> <r for reverse>\n" << endl;
+   options.allow_unrecognised_options();
 
-   if( argc >= 2 )
+   int32_t nRuns;
+   size_t  szBuf;
+   bool    bReverse;
+   bool    bMemsetOnly;
+   bool    bSimdOnly;
+
+   try
    {
-      nRuns = atoi( argv[1] );
-   }
-   if( argc >= 3 )
-   {
-      szBuf = atoi( argv[2] );
-   }
-   if( argc == 4 )
-   {
-      if( *argv[3] == 'r' )
+      auto result = options.parse( argc, argv );
+      if( result.count( "help" ) )
       {
-         // reverse order call memset and simd memset
-         bReverse = true;
+         cout << options.help() << endl;
+         return -1; 
       }
-   }
 
+      nRuns       = result["i"].as<uint32_t>();
+      szBuf       = result["m"].as<uint32_t>();
+      bReverse    = result["r"].as<bool>();
+      bMemsetOnly = result["g"].as<bool>(); 
+      bSimdOnly   = result["s"].as<bool>(); 
+      if( bMemsetOnly && bSimdOnly )
+      {
+         cerr << "choose memeset only xor simd only" << endl;
+         return -1;
+      }
 
-   locale::global(locale("en_US.UTF-8"));
-   cout << "benchmark: byes alloc:" << szBuf << ", iterations:" << nRuns << endl;
-   if( true == bReverse )
+      locale::global(locale("en_US.UTF-8"));
+      cout << "\nbenchmark: byes alloc:" << szBuf << ", iterations:" << nRuns << endl;
+      if( false == bReverse ) cout << "   call memset and then simd" << endl;
+      if( true == bReverse )  cout << "   call simd and then memset" << endl;
+      if( bMemsetOnly )       cout << "   run memeset only" << endl;
+      if( bSimdOnly   )       cout << "   run simd only" << endl;
+      cout << "--------------------------------" << endl;
+      } catch (exception &e )
    {
-      cout << "  call mem ops in reverse order" << endl;
+      cout << options.help() << endl;
+      return -1; 
    }
-   cout << endl;
 
+   cout << "\nrun not forced aligned" << endl;
    char *pdata = ptr( szBuf );
    if( nullptr != pdata )
    {
       if( false == bReverse )
       {
-         run_std ( pdata, szBuf, nRuns );
-         run_simd( pdata, szBuf, nRuns );
+         if( true == bMemsetOnly ) run_std ( pdata, szBuf, nRuns );
+         if( true == bSimdOnly   ) run_simd( pdata, szBuf, nRuns );
+         if( (false == bMemsetOnly) && (false == bSimdOnly) )
+         {
+            run_std ( pdata, szBuf, nRuns );
+            run_simd( pdata, szBuf, nRuns );
+         }
       } else
       {
-         run_simd( pdata, szBuf, nRuns );
-         run_std ( pdata, szBuf, nRuns );
+         if( true == bMemsetOnly ) run_std ( pdata, szBuf, nRuns );
+         if( true == bSimdOnly   ) run_simd( pdata, szBuf, nRuns );
+         if( (false == bMemsetOnly) && (false == bSimdOnly) )
+         {
+            run_std ( pdata, szBuf, nRuns );
+            run_simd( pdata, szBuf, nRuns );
+         }
       }
       delete[] pdata;
    } else
@@ -171,12 +202,22 @@ int main( int argc, char* argv[] )
    {
       if( false == bReverse )
       {
-         run_std ( pdata, szBuf, nRuns );
-         run_simd( pdata, szBuf, nRuns );
+         if( true == bMemsetOnly ) run_std ( pdata, szBuf, nRuns );
+         if( true == bSimdOnly   ) run_simd( pdata, szBuf, nRuns );
+         if( (false == bMemsetOnly) && (false == bSimdOnly) )
+         {
+            run_std ( pdata, szBuf, nRuns );
+            run_simd( pdata, szBuf, nRuns );
+         }
       } else
       {
-         run_simd( pdata, szBuf, nRuns );
-         run_std ( pdata, szBuf, nRuns );
+         if( true == bMemsetOnly ) run_std ( pdata, szBuf, nRuns );
+         if( true == bSimdOnly   ) run_simd( pdata, szBuf, nRuns );
+         if( (false == bMemsetOnly) && (false == bSimdOnly) )
+         {
+            run_std ( pdata, szBuf, nRuns );
+            run_simd( pdata, szBuf, nRuns );
+         }
       }
       free( pdata );
    } else
