@@ -122,8 +122,10 @@ int main( int argc, char* argv[] )
       ( "i,iterations", "Number of iterations to run",       cxxopts::value<uint32_t>()->default_value( "1000"  ) )
       ( "m,mem", "Memory to allocate for test" ,             cxxopts::value<uint32_t>()->default_value( "512"   ) )
       ( "r,reverse", "Reverse call order to memset an simd", cxxopts::value<bool>()->    default_value( "false" ) )
-      ( "g,memset-only", "Run memeset only" )
-      ( "s,simd-only", "Run simd only"      )
+      ( "M,memset-only", "Run memeset only"                         )
+      ( "S,simd-only", "Run simd only"                              )
+      ( "A,skip-alligned-alloc", "Do not run aligned mem alloc"       )
+      ( "a,skip-unalligned-alloc", "Do not run UN-aligned mem alloc"  )
       ( "h,help", "Usage" );
 
    options.allow_unrecognised_options();
@@ -133,6 +135,8 @@ int main( int argc, char* argv[] )
    bool    bReverse;
    bool    bMemsetOnly;
    bool    bSimdOnly;
+   bool    bDoNotRunNonAlignedAlloc;
+   bool    bDoNotRunAlignedAlloc;
 
    try
    {
@@ -143,11 +147,15 @@ int main( int argc, char* argv[] )
          return -1; 
       }
 
-      nRuns       = result["i"].as<uint32_t>();
-      szBuf       = result["m"].as<uint32_t>();
-      bReverse    = result["r"].as<bool>();
-      bMemsetOnly = result["g"].as<bool>(); 
-      bSimdOnly   = result["s"].as<bool>(); 
+      nRuns                    = result["i"].as<uint32_t>();
+      szBuf                    = result["m"].as<uint32_t>();
+      bReverse                 = result["r"].as<bool>();
+      bMemsetOnly              = result["M"].as<bool>(); 
+      bSimdOnly                = result["S"].as<bool>(); 
+      bSimdOnly                = result["S"].as<bool>(); 
+      bDoNotRunNonAlignedAlloc = result["A"].as<bool>(); 
+      bDoNotRunAlignedAlloc    = result["a"].as<bool>(); 
+
       if( bMemsetOnly && bSimdOnly )
       {
          cerr << "choose memeset only xor simd only" << endl;
@@ -156,10 +164,12 @@ int main( int argc, char* argv[] )
 
       locale::global(locale("en_US.UTF-8"));
       cout << "\nbenchmark: byes alloc:" << szBuf << ", iterations:" << nRuns << endl;
-      if( false == bReverse ) cout << "   call memset and then simd" << endl;
-      if( true == bReverse )  cout << "   call simd and then memset" << endl;
-      if( bMemsetOnly )       cout << "   run memeset only" << endl;
-      if( bSimdOnly   )       cout << "   run simd only" << endl;
+      if( false == bReverse        ) cout << "   call memset and then simd" << endl;
+      if( true == bReverse         ) cout << "   call simd and then memset" << endl;
+      if( bMemsetOnly              ) cout << "   run memeset only" << endl;
+      if( bSimdOnly                ) cout << "   run simd only" << endl;
+      if( bDoNotRunAlignedAlloc    ) cout << "   do not run un-aligned mem alloc" << endl;
+      if( bDoNotRunNonAlignedAlloc ) cout << "   do not run aligned mem alloc" << endl;
       cout << "--------------------------------" << endl;
       } catch (exception &e )
    {
@@ -167,10 +177,10 @@ int main( int argc, char* argv[] )
       return -1; 
    }
 
-   cout << "\nrun not forced aligned" << endl;
    char *pdata = ptr( szBuf );
-   if( nullptr != pdata )
+   if( (nullptr != pdata) && (false == bDoNotRunAlignedAlloc) )
    {
+      cout << "\nrun un-aligned" << endl;
       if( false == bReverse )
       {
          if( true == bMemsetOnly ) run_std ( pdata, szBuf, nRuns );
@@ -191,15 +201,16 @@ int main( int argc, char* argv[] )
          }
       }
       delete[] pdata;
-   } else
+   } 
+   if( nullptr == pdata )
    {
       cerr << "size must be a multiple of " << sizeof( __m256i ) << endl;
    }
 
-   cout << "\nrun aligned" << endl;
    pdata = ptr_align( szBuf );
-   if( nullptr != pdata )
+   if( (nullptr != pdata) && (false == bDoNotRunNonAlignedAlloc) )
    {
+      cout << "\nrun aligned" << endl;
       if( false == bReverse )
       {
          if( true == bMemsetOnly ) run_std ( pdata, szBuf, nRuns );
@@ -220,7 +231,8 @@ int main( int argc, char* argv[] )
          }
       }
       free( pdata );
-   } else
+   } 
+   if( nullptr == pdata )
    {
       cerr << "size must be a multiple of " << sizeof( __m256i ) << endl;
    }
