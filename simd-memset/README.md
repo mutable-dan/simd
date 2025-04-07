@@ -25,7 +25,17 @@ Interesting: running with one iteration, the simd call always  does better.  Is 
 ![alt text]( screenshots/benchmark-2-release.png )  
 Looking at the asm generated,  I saw something that should have been obvious. _mm256_set1_epi8 does not need to be in the loop and that it generates a lot of instructions  
 Being out of the loop, optimizing the size of the type until the runtimes are significanty better.  
-
+  
+  
+  
+![alt text]( screenshots/memset-O0-asm.png )  
+Here is the asm where memset is called, not so interesting  
+Will need to hunt down the actual code  
+  
+![alt text]( screenshots/mm256_storeu_si256-O0-asm.png )  
+Here is the asm for the SIMD intrinsic  
+  
+**perf testing**    
 **<ins>benchmark: byes alloc:4096, iterations:50000000</ins>**  
 writing one page of ata and rotating the write to try for cache misses  
 release build  
@@ -71,3 +81,4 @@ sudo perf stat -Bd ./simd -i 50000000 -m 4096 -M -a
 sudo perf stat -Bd ./simd -i 50000000 -m 4096 -S -a  
 ![simd perf]( screenshots/benchmark-simd-perf-not-aligned.png )    
   
+Will test with varius write sizes, memset may be better in some circumstances  
