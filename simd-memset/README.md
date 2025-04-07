@@ -28,7 +28,8 @@ Being out of the loop, optimizing the size of the type until the runtimes are si
 
   
 ![alt text]( screenshots/memset-O0-asm.png )  
-Here is the asm where memset is called, not so interesting    
+Here is the asm where memset is called, not so interesting  
+Will need to hunt down the actual code  
   
 ![alt text]( screenshots/mm256_storeu_si256-O0-asm.png )  
 Here is the asm for the SIMD intrinsic  
