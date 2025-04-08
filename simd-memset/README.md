@@ -1,15 +1,20 @@
-# simd
+  
 [(back)](../README.md)
   
-## Added a command line optios header only library  
+** Can vector (simd) instructions outperform memset writes using standard instruction set**     
+Using AVX2 simd intrinsics, I will compare the performance of glic memset against _mm256_set1_epi8 vector instruction  
+  
+The _mm256_set1_epi8 can write 32byes (256 bits) at a time  
+  
+
+## <ins>goal: learn to prog using gcc simd compiler intrinsics<ins>  
+CPU: Core i7-6 model 94 supporting AVX2 and sse4.2
+
+## Note: Added a command line options header only library  
 I did not want to install so I made a sym link to the library as  
 ln -s <path>/cxxopts/include include  
 just point your make file INCLUDEDIR to the symlink to path aboove  
   
-  
-## <ins>learn to prog using gcc simd compiler intrinsics<ins>  
-CPU: Core i7-6 model 94 supporting AVX2 and sse4.2
-
 First round of test are not as expected. Aligned alloc showed no difference (though it is possible that the alloc that was not specifically aligned was in fact aligned)  
 This test was with the _mm256_storeu_si256 intrinsic  
 
@@ -35,10 +40,28 @@ Will need to hunt down the actual code
 ![alt text]( screenshots/mm256_storeu_si256-O0-asm.png )  
 Here is the asm for the SIMD intrinsic  
   
+The code is looking better now, and the simd is pperforming nicely  
+   
 **perf testing**    
-**<ins>benchmark: byes alloc:4096, iterations:50000000</ins>**  
-writing one page of ata and rotating the write to try for cache misses  
+**<ins>benchmark: byes alloc:4096, iterations:50,000,000</ins>**  
+writing one page of data and rotating the write to try for cache misses  
 release build  
+  
+```
+Usage:  
+perf test of memset using simd instructions  vs glibc memset  
+Usage:  
+  simd [OPTION...]  
+  
+  -i, --iterations arg         Number of iterations to run (default: 1000)  
+  -m, --mem arg                Memory to allocate for test (default: 512)  
+  -r, --reverse                Reverse call order to memset an simd  
+  -M, --memset-only            Run memeset only  
+  -S, --simd-only              Run simd only  
+  -A, --skip-alligned-alloc    Do not run aligned mem alloc  
+  -a, --skip-unalligned-alloc  Do not run UN-aligned mem alloc  
+  -h, --help                   Usage  
+```
   
    
 **memset**   
@@ -88,7 +111,7 @@ sudo perf stat -Bd ./simd -i 50000000 -m 4096 -M -a
 sudo perf stat -Bd ./simd -i 50000000 -m 4096 -S -a  
 ![simd perf]( screenshots/benchmark-simd-perf-not-aligned.png )    
 
-A quick observations shows that the simd runs had about 5% more cache misses and slighly less branch misses  
+A quick observations shows that the simd runs had about 5% more cache misses and slightly less branch misses  
 and it ran about 16x more instructions than memset.  I will need to look into these numbers to make sure they are being interpreted correctly  
   
 Will test with varius write sizes, memset may be better in some circumstances  
