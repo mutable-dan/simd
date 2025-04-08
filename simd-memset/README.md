@@ -1,7 +1,7 @@
   
 [(back)](../README.md)
   
-** Can vector (simd) instructions outperform memset writes using standard instruction set**     
+**Can vector (simd) instructions outperform memset writes using standard instruction set**     
 Using AVX2 simd intrinsics, I will compare the performance of glic memset against _mm256_set1_epi8 vector instruction  
   
 The _mm256_set1_epi8 can write 32byes (256 bits) at a time  
