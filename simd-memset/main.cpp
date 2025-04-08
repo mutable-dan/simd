@@ -30,14 +30,12 @@ bool memset_simd( int8* a_pData, const char a_ch, size_t a_sz )
       return false;
    }
 
-   //char   *pdata = (char*)a_pData;
    __m256i *p256 = &(a_pData->v);
    size_t  sz = a_sz;
 
    __m256i vstr = _mm256_set1_epi8( a_ch );
    while( sz > 0 )
    {
-     //_mm256_storeu_si256( (__m256i*)pdata, vstr );
      _mm256_storeu_si256( p256, vstr );
 
      // *(int64_t*)(pdata+0)  = vstr[0];
