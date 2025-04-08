@@ -7,45 +7,13 @@ Using AVX2 simd intrinsics, I will compare the performance of glic memset agains
 The _mm256_set1_epi8 can write 32byes (256 bits) at a time  
   
 
-## <ins>goal: learn to prog using gcc simd compiler intrinsics<ins>  
+## <ins>Goal: learn to prog using gcc simd compiler intrinsics<ins>  
 CPU: Core i7-6 model 94 supporting AVX2 and sse4.2
 
 ## Note: Added a command line options header only library  
 I did not want to install so I made a sym link to the library as  
 ln -s <path>/cxxopts/include include  
 just point your make file INCLUDEDIR to the symlink to path aboove  
-  
-First round of test are not as expected. Aligned alloc showed no difference (though it is possible that the alloc that was not specifically aligned was in fact aligned)  
-This test was with the _mm256_storeu_si256 intrinsic  
-
-![alt text]( screenshots/benchmark-1-release.png )  
-memset uses larger types, such as int64_t to write  
-
-![alt text]( screenshots/benchmark-1-debug.png )  
-Notice that building with optimization disabled affects the simd runtime way more than memset  
-
-I will need to profile the code and look for cache hits vs misses. Expecting cache misses as I am invalidating the cache by writing a diff value for each iteration writing to memory.  
-Interesting: running with one iteration, the simd call always  does better.  Is it the cache??  
-
-![alt text]( screenshots/benchmark-2-release.png )  
-Looking at the asm generated,  I saw something that should have been obvious. _mm256_set1_epi8 does not need to be in the loop and that it generates a lot of instructions  
-Being out of the loop, optimizing the size of the type until the runtimes are significanty better.  
-  
-  
-  
-![alt text]( screenshots/memset-O0-asm.png )  
-Here is the asm where memset is called, not so interesting  
-Will need to hunt down the actual code  
-  
-![alt text]( screenshots/mm256_storeu_si256-O0-asm.png )  
-Here is the asm for the SIMD intrinsic  
-  
-The code is looking better now, and the simd is pperforming nicely  
-   
-**perf testing**    
-**<ins>benchmark: byes alloc:4096, iterations:50,000,000</ins>**  
-writing one page of data and rotating the write to try for cache misses  
-release build  
   
 ```
 Usage:  
@@ -63,6 +31,14 @@ Usage:
   -h, --help                   Usage  
 ```
   
+**Run tests**  
+   * memset  
+      * with explicit alignment  
+      * without explicit alignment  
+   * simd  
+      * with alignment (note that the _mm256_storeu_si256 intrinsic does not require alignment)  
+      * without alignment   
+   
    
 **memset**   
   
@@ -115,3 +91,21 @@ A quick observations shows that the simd runs had about 5% more cache misses and
 and it ran about 16x more instructions than memset.  I will need to look into these numbers to make sure they are being interpreted correctly  
   
 Will test with varius write sizes, memset may be better in some circumstances  
+  
+  
+**Lets start looking at the asm generated**    
+![alt text]( screenshots/memset-O0-asm.png )  
+Here is the asm where memset is called, not so interesting  
+Will need to hunt down the actual code  
+  
+![alt text]( screenshots/mm256_storeu_si256-O0-asm.png )  
+Here is the asm for the SIMD intrinsic  
+  
+The code is looking better now, and the simd is pperforming nicely  
+   
+**perf testing**    
+**<ins>benchmark: byes alloc:4096, iterations:50,000,000</ins>**  
+writing one page of data and rotating the write to try for cache misses  
+release build  
+  
+
