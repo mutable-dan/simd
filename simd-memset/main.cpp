@@ -194,8 +194,8 @@ int main( int argc, char* argv[] )
          if( true == bSimdOnly   ) run_simd( pdata, szBuf, nRuns );
          if( (false == bMemsetOnly) && (false == bSimdOnly) )
          {
-            run_std ( pdata, szBuf, nRuns );
             run_simd( pdata, szBuf, nRuns );
+            run_std ( pdata, szBuf, nRuns );
          }
       }
       delete[] pdata;
@@ -224,8 +224,8 @@ int main( int argc, char* argv[] )
          if( true == bSimdOnly   ) run_simd( pdata, szBuf, nRuns );
          if( (false == bMemsetOnly) && (false == bSimdOnly) )
          {
-            run_std ( pdata, szBuf, nRuns );
             run_simd( pdata, szBuf, nRuns );
+            run_std ( pdata, szBuf, nRuns );
          }
       }
       free( pdata );
