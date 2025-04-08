@@ -49,6 +49,7 @@ Memset std  took 2,265,742us
 Memset std  took 2,191,280us  
 Memset std  took 2,207,894us  
 Memset std  took 2,245,681us  
+  ave: 2,218,382us  
   
 <ins>run aligned</ins>  
 Memset std  took 2,204,133us  
@@ -56,6 +57,7 @@ Memset std  took 2,303,328us
 Memset std  took 2,188,542us  
 Memset std  took 2,197,137us  
 Memset std  took 2,208,045us  
+  ave: 2,220,237us  
   
 **simd memset**  
   
@@ -65,14 +67,19 @@ Memset simd took 1,829,741us
 Memset simd took 1,901,355us  
 Memset simd took 1,835,607us  
 Memset simd took 1,844,677us  
-  
+  ave: 1,865,023us  
+
 <ins>run aligned</ins>  
 Memset simd took 1,868,667us  
 Memset simd took 1,800,263us  
 Memset simd took 1,870,218us  
 Memset simd took 1,869,439us  
 Memset simd took 1,893,939us  
+  ave: 1,860,505us  
+
+**The simd instructuction for memset is 16% faster than memset for wrtitng to a page of memory**  
   
+
 **perf**    
 sudo perf stat -Bd ./simd -i 50000000 -m 4096 -M -a  
   
@@ -80,5 +87,8 @@ sudo perf stat -Bd ./simd -i 50000000 -m 4096 -M -a
   
 sudo perf stat -Bd ./simd -i 50000000 -m 4096 -S -a  
 ![simd perf]( screenshots/benchmark-simd-perf-not-aligned.png )    
+
+A quick observations shows that the simd runs had about 5% more cache misses and slighly less branch misses  
+and it ran about 16x more instructions than memset.  I will need to look into these numbers to make sure they are being interpreted correctly  
   
 Will test with varius write sizes, memset may be better in some circumstances  
