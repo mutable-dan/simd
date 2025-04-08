@@ -43,6 +43,8 @@ Usage:
 **memset**   
   
 <ins>run un-aligned</ins>  
+```  ./simd -i 50000000 -m 4096 -M -A ```  
+  
 Memset std  took 2,181,315us  
 Memset std  took 2,265,742us  
 Memset std  took 2,191,280us  
@@ -51,6 +53,8 @@ Memset std  took 2,245,681us
   ave: 2,218,382us  
   
 <ins>run aligned</ins>  
+```  ./simd -i 50000000 -m 4096 -M -a ```  
+  
 Memset std  took 2,204,133us  
 Memset std  took 2,303,328us  
 Memset std  took 2,188,542us  
@@ -61,6 +65,8 @@ Memset std  took 2,208,045us
 **simd memset**  
   
 <ins>run un-aligned</ins>  
+```  ./simd -i 50000000 -m 4096 -S -A ```  
+  
 Memset simd took 1,913,739us  
 Memset simd took 1,829,741us  
 Memset simd took 1,901,355us  
@@ -69,6 +75,8 @@ Memset simd took 1,844,677us
   ave: 1,865,023us  
 
 <ins>run aligned</ins>  
+```  ./simd -i 50000000 -m 4096 -S -a ```  
+  
 Memset simd took 1,868,667us  
 Memset simd took 1,800,263us  
 Memset simd took 1,870,218us  
