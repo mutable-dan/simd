@@ -56,6 +56,7 @@ void run_std( char* a_pdata, size_t a_szBuf, const int32_t a_count )
    auto start_reg = chrono::high_resolution_clock::now();
    for( int i=0; i<a_count; ++i )
    {
+      //builtin_clear_cache();
       memset( (void*)a_pdata, ++ch, a_szBuf*sizeof(char) );
    } 
    auto stop_reg = chrono::high_resolution_clock::now();
